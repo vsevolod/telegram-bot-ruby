@@ -6,6 +6,8 @@ module Telegram
       ## Just for classes consistency
       # rubocop:disable Naming/ConstantName
       RichText = (
+        Types::String |
+        Types::Array.of(Types.deferred(:RichText)) |
         RichTextBold |
         RichTextItalic |
         RichTextUnderline |

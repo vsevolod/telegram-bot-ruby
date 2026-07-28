@@ -302,4 +302,35 @@ RSpec.describe Telegram::Bot::Api, :vcr do
       end
     end
   end
+
+  describe '#build_params / nested JSON encoding' do
+    subject(:params) { api.send(:build_params, raw) }
+
+    let(:token) { '123456:TEST' }
+    let(:environment) { :test }
+
+    context 'when rich_message is a Hash' do
+      let(:raw) { { chat_id: 1, rich_message: { markdown: '**hi**' } } }
+
+      it 'JSON-encodes the nested hash' do
+        expect(params[:rich_message]).to eq({ markdown: '**hi**' }.to_json)
+      end
+    end
+
+    context 'when reply_parameters is a Hash' do
+      let(:raw) { { chat_id: 1, reply_parameters: { message_id: 42 } } }
+
+      it 'JSON-encodes reply_parameters' do
+        expect(params[:reply_parameters]).to eq({ message_id: 42 }.to_json)
+      end
+    end
+
+    context 'when value is a plain string' do
+      let(:raw) { { chat_id: 1, text: 'hello' } }
+
+      it 'leaves scalars untouched' do
+        expect(params).to include(text: 'hello', chat_id: 1)
+      end
+    end
+  end
 end
