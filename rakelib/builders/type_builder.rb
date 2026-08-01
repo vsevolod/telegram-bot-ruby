@@ -38,21 +38,15 @@ module Builders
     end
 
     def build_empty_type
-      attrs = Array(attributes[:type]).map { |member| empty_type_member(member.to_s) }
-                                      .join(" |\n        ")
+      attrs = attributes[:type].map { |member| empty_type_member(member.to_s) }
+                               .join(" |\n        ")
       render_template('empty_type.erb', name: name, attributes: attrs)
     end
 
-    # Docs unions may include "string" / "array:Name" alongside struct members.
     def empty_type_member(member)
-      return 'Types::String' if member == 'string'
+      return "Types::Array.of(#{add_module_types(member.delete_prefix('array:'))})" if member.start_with?('array:')
 
-      if member.start_with?('array:')
-        target = member.delete_prefix('array:')
-        return "Types::Array.of(Types.deferred(:#{target}))"
-      end
-
-      member
+      add_module_types(member)
     end
 
     def build_full_type

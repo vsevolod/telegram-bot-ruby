@@ -39,14 +39,13 @@ RSpec.describe Parsers::TypesParser do
       expect(result['type']).to eq(%w[array:RichText RichTextBold])
     end
 
-    it 'prepends both string and array when both are described' do
+    it 'keeps string before array when both are described' do
       result = parse_union(
         '<p>String for plain text, an Array of RichText for sequences, or one of:</p>',
         %w[RichTextBold RichTextItalic]
       )
 
-      # array is applied after string, so it ends up first among the synthetic members
-      expect(result['type']).to eq(%w[array:RichText string RichTextBold RichTextItalic])
+      expect(result['type']).to eq(%w[string array:RichText RichTextBold RichTextItalic])
     end
 
     it 'deduplicates members' do

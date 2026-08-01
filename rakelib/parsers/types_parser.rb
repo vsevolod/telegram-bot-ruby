@@ -80,10 +80,11 @@ module Parsers
     end
 
     def parse_union_type(ul_element, description, type_name)
-      types = ul_element.css('li a').map { |a| a.text.strip }
+      types = []
       desc_text = description&.text.to_s
-      types = ['string', *types] if desc_text.match?(/String for plain text/i)
-      types = ["array:#{type_name}", *types] if desc_text.match?(/an Array of #{type_name}/i)
+      types << 'string' if desc_text.match?(/String for plain text/i)
+      types << "array:#{type_name}" if desc_text.match?(/an Array of #{type_name}/i)
+      types.concat(ul_element.css('li a').map { |a| a.text.strip })
       { 'type' => types.uniq }
     end
 
