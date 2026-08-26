@@ -136,9 +136,10 @@ module Parsers
       # Parse required (absence of "Optional" at start of description)
       attribute['required'] = true unless description.start_with?('Optional')
 
-      # Parse required_value (always "X" or must be <em>X</em>)
+      # Parse required_value (always "X" or unconditional must be <em>X</em>)
       required_value = extract_required_value(description, description_html)
-      if required_value
+      unless required_value.nil?
+        required_value = cast_default_value(required_value, attribute['type'])
         attribute['required_value'] = required_value
         attribute['default'] = required_value
       end
@@ -223,8 +224,8 @@ module Parsers
       match = description.match(/always ["\u201c]([^"\u201d]+)["\u201d]/i)
       return match[1].delete('\\') if match
 
-      # Pattern: must be <em>X</em> (check inner HTML)
-      match = description_html.match(%r{must be <em>([^<]+)</em>}i)
+      # Pattern: must be <em>X</em> (ignore conditional "... for ..." clauses)
+      match = description_html.match(%r{must be <em>([^<]+)</em>(?!\s+for\b)}i)
       return match[1] if match
 
       nil

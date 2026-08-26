@@ -3,9 +3,8 @@
 module Telegram
   module Bot
     module Types
-      class InlineKeyboardButton < Base
-        attribute :text, Types::String
-        attribute? :icon_custom_emoji_id, Types::String
+      class RichMessageButton < Base
+        attribute :text, Types.deferred(:RichText)
         attribute? :style, Types::String
         attribute? :url, Types::String
         attribute? :callback_data, Types::String
@@ -15,8 +14,6 @@ module Telegram
         attribute? :switch_inline_query_current_chat, Types::String
         attribute? :switch_inline_query_chosen_chat, SwitchInlineQueryChosenChat
         attribute? :copy_text, CopyTextButton
-        attribute? :callback_game, CallbackGame
-        attribute? :pay, Types::Bool
         attribute? :disabled, DisabledButton
       end
     end

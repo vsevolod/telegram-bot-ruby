@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.9.0
+
+### Added
+
+- [Bot API 10.3](https://core.telegram.org/bots/api-changelog#august-24-2026) support, including buttons and documents in rich messages, ephemeral message parameters, reply markup updates, and new community, welcome-message, and generation updates.
+
 ## 2.8.1
 
 ### Fixed

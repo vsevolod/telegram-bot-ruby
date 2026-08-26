@@ -5,7 +5,7 @@ module Telegram
     module Types
       class <%= name %> < Base
       <% attributes.each_pair do |name, properties| %>
-        <%= "#{properties[:required] ? 'attribute' : 'attribute?'} :#{name}, #{properties[:type]}" %>
+        <%= format_attribute(name, properties) %>
       <% end %>
       end
     end

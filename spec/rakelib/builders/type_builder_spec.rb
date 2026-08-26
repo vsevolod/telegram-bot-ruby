@@ -57,4 +57,88 @@ RSpec.describe Builders::TypeBuilder do
       end
     end
   end
+
+  describe '#build for optional booleans' do
+    subject(:output) { builder.build }
+
+    let(:type_name) { 'EphemeralMessageParameters' }
+    let(:attributes) do
+      {
+        replace_callback_query_message: {
+          type: 'boolean'
+        }
+      }
+    end
+    let(:types) { { type_name => attributes } }
+
+    it 'does not add a constraint or default' do
+      expect(output).to include(
+        'attribute? :replace_callback_query_message, Types::Bool'
+      )
+    end
+  end
+
+  describe '#build for formatted numeric constraints' do
+    subject(:output) { builder.build }
+
+    let(:type_name) { 'SuggestedPostPrice' }
+    let(:attributes) do
+      {
+        amount: {
+          type: 'integer',
+          min_size: 5,
+          max_size: 100_000
+        }
+      }
+    end
+    let(:types) { { type_name => attributes } }
+
+    it 'uses separators in large numeric literals' do
+      expect(output).to include('max_size: 100_000')
+    end
+  end
+
+  describe '#build for max-only constraints' do
+    subject(:output) { builder.build }
+
+    let(:type_name) { 'Game' }
+    let(:attributes) do
+      {
+        text: {
+          type: 'string',
+          max_size: 4_096
+        }
+      }
+    end
+    let(:types) { { type_name => attributes } }
+
+    it 'emits a max_size predicate without a min_size prefix' do
+      expect(output).to include('Types::String.constrained(max_size: 4_096)')
+    end
+  end
+
+  describe '#build for long union attributes' do
+    subject(:output) { builder.build }
+
+    let(:type_name) { 'InputRichMessageMedia' }
+    let(:attributes) do
+      {
+        media: {
+          type: %w[
+            InputMediaAnimation
+            InputMediaAudio
+            InputMediaDocument
+            InputMediaPhoto
+            InputMediaVideo
+            InputMediaVoiceNote
+          ]
+        }
+      }
+    end
+    let(:types) { { type_name => attributes } }
+
+    it 'wraps long union types across lines' do
+      expect(output).to match(/attribute\? :media,\n\s+InputMediaAnimation.*\n\s+InputMediaVoiceNote/)
+    end
+  end
 end

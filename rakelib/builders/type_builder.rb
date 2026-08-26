@@ -5,6 +5,9 @@ require 'erb'
 module Builders
   class TypeBuilder
     DRY_TYPES = %w[string integer float decimal array hash symbol boolean date date_time time range].freeze
+    MAX_LINE_LENGTH = 120
+    ATTRIBUTE_INDENT = '        '
+    CONTINUATION_INDENT = '                  '
 
     attr_reader :name, :attributes, :templates_dir
 
@@ -95,7 +98,7 @@ module Builders
     end
 
     def apply_required!(attr_name, properties, original_type)
-      return unless properties[:required_value]
+      return if properties[:required_value].nil?
 
       attributes[attr_name][:type] += ".constrained(eql: #{typecast(original_type, properties[:required_value])})"
     end
@@ -103,10 +106,20 @@ module Builders
     def apply_min_max!(attr_name, properties)
       return unless properties[:min_size] || properties[:max_size]
 
-      constrain = '.constrained(minmax)'
-      constrain = properties[:min_size] ? constrain.gsub('min', "min_size: #{properties[:min_size]}, ") : ''
-      constrain = constrain.gsub('max', "max_size: #{properties[:max_size]}") if properties[:max_size]
-      attributes[attr_name][:type] += constrain
+      attributes[attr_name][:type] += min_max_constraint(properties)
+    end
+
+    def min_max_constraint(properties)
+      constraints = []
+      if properties[:min_size]
+        min_size = format_numeric_literal(properties[:min_size])
+        constraints << "min_size: #{min_size}"
+      end
+      if properties[:max_size]
+        max_size = format_numeric_literal(properties[:max_size])
+        constraints << "max_size: #{max_size}"
+      end
+      ".constrained(#{constraints.join(', ')})"
     end
 
     def apply_default!(attr_name, properties, original_type)
@@ -123,7 +136,47 @@ module Builders
     end
 
     def typecast(type, obj)
-      type == 'Types::String' ? "'#{obj}'" : obj
+      type == 'Types::String' ? "'#{obj}'" : format_numeric_literal(obj)
+    end
+
+    def format_numeric_literal(value)
+      return value unless value.is_a?(Integer)
+
+      value.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1_').reverse
+    end
+
+    def format_attribute(name, properties)
+      prefix = "#{properties[:required] ? 'attribute' : 'attribute?'} :#{name},"
+      type = properties[:type]
+      line = "#{prefix} #{type}"
+      return line unless wrap_attribute_type?(prefix, type)
+
+      "#{prefix}\n#{CONTINUATION_INDENT}#{wrap_union_type(type)}"
+    end
+
+    def wrap_attribute_type?(prefix, type)
+      type.include?(' | ') && ATTRIBUTE_INDENT.length + prefix.length + 1 + type.length > MAX_LINE_LENGTH
+    end
+
+    def wrap_union_type(type)
+      lines = type.split(' | ').each_with_object([]) { |part, result| append_union_part(result, part) }
+
+      lines.map.with_index { |part, index| index == lines.length - 1 ? part : "#{part} |" }
+           .join("\n#{CONTINUATION_INDENT}")
+    end
+
+    def append_union_part(lines, part)
+      return lines << part if lines.empty?
+
+      if union_line_fits?(lines.last, part)
+        lines[-1] = "#{lines.last} | #{part}"
+      else
+        lines << part
+      end
+    end
+
+    def union_line_fits?(line, part)
+      CONTINUATION_INDENT.length + line.length + 3 + part.length <= MAX_LINE_LENGTH
     end
 
     def render_template(template_name, vars)

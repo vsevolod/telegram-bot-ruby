@@ -58,4 +58,27 @@ RSpec.describe Parsers::TypesParser do
       expect(result['type']).to eq(%w[string RichTextBold])
     end
   end
+
+  describe '#parse_attribute' do
+    def parse_attribute(type, description)
+      type_cell = Nokogiri::HTML.fragment(%(<td><a href="##{type}">#{type}</a></td>)).at('td')
+      description_cell = Nokogiri::HTML.fragment("<td>#{description}</td>").at('td')
+
+      parser.send(:parse_attribute, type_cell, description_cell)
+    end
+
+    it 'does not treat a conditional false value as a required value' do
+      result = parse_attribute(
+        'Boolean', 'Optional. Must be <em>False</em> for callback queries from ephemeral messages.'
+      )
+
+      expect(result).to eq('type' => 'boolean')
+    end
+
+    it 'keeps unconditional required values' do
+      result = parse_attribute('String', 'Optional. The type is always "example".')
+
+      expect(result).to include('type' => 'string', 'required_value' => 'example', 'default' => 'example')
+    end
+  end
 end

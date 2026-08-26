@@ -2,6 +2,9 @@
 
 module Telegram
   module Bot
-    VERSION = '2.9.0'
+    module Types
+      class DisabledButton < Base
+      end
+    end
   end
 end

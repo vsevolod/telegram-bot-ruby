@@ -7,7 +7,7 @@ module Telegram
         attribute :type, Types::String.constrained(eql: 'live_photo').default('live_photo')
         attribute :media, Types::String
         attribute :photo, Types::String
-        attribute? :caption, Types::String
+        attribute? :caption, Types::String.constrained(max_size: 1_024)
         attribute? :parse_mode, Types::String
         attribute? :caption_entities, Types::Array.of(MessageEntity)
         attribute? :show_caption_above_media, Types::Bool
